@@ -125,8 +125,6 @@ services:
 
 volumes:
   mysql_data:
-    external: true
-    name: cross-model-drift_mysql_data
   clearml_logs:
   clearml_config:
   clearml_files:

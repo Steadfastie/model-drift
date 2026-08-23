@@ -1,3 +1,4 @@
+notebooks/01_seed_data.ipynb filter=nbstripout
 notebooks/02_data_distribution.ipynb filter=nbstripout
 notebooks/03_chronological_splits.ipynb filter=nbstripout
 notebooks/04_transaction_features.ipynb filter=nbstripout
