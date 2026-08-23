@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Literal
@@ -8,6 +9,11 @@ import pandas as pd
 
 SplitName = Literal["train", "validation", "test", "holdout"]
 ModelVersion = Literal["v1", "v2"]
+
+TRAIN_MONTHS = 2
+VALIDATION_DAYS = 7
+TEST_DAYS = 7
+V2_SHIFT_DAYS = 7
 
 
 @dataclass(frozen=True)
@@ -31,35 +37,59 @@ class DateWindow:
         return f"{self.start.isoformat()} → {self.end.isoformat()}"
 
 
-# Chronological windows from the champion/challenger plan (dataset year 2021).
-V1_TRAIN = DateWindow(date(2021, 5, 21), date(2021, 7, 21))
-V1_VALIDATION = DateWindow(date(2021, 7, 22), date(2021, 7, 28))
-V1_TEST = DateWindow(date(2021, 7, 29), date(2021, 8, 4))
+@dataclass(frozen=True)
+class SplitPlan:
+    origin: date
+    v1: dict[SplitName, DateWindow]
+    v2: dict[SplitName, DateWindow]
 
-V2_TRAIN = DateWindow(date(2021, 5, 28), date(2021, 7, 28))
-V2_VALIDATION = DateWindow(date(2021, 7, 29), date(2021, 8, 4))
-V2_TEST = DateWindow(date(2021, 8, 5), date(2021, 8, 21))
+    @property
+    def holdout(self) -> DateWindow:
+        return self.v2["test"]
 
-FINAL_HOLDOUT = DateWindow(date(2021, 8, 5), date(2021, 8, 21))
-
-V1_WINDOWS: dict[SplitName, DateWindow] = {
-    "train": V1_TRAIN,
-    "validation": V1_VALIDATION,
-    "test": V1_TEST,
-    "holdout": FINAL_HOLDOUT,
-}
-V2_WINDOWS: dict[SplitName, DateWindow] = {
-    "train": V2_TRAIN,
-    "validation": V2_VALIDATION,
-    "test": V2_TEST,
-    "holdout": FINAL_HOLDOUT,
-}
+    def windows_for(self, version: ModelVersion) -> dict[SplitName, DateWindow]:
+        if version == "v1":
+            return self.v1
+        return self.v2
 
 
-def windows_for(version: ModelVersion) -> dict[SplitName, DateWindow]:
-    if version == "v1":
-        return V1_WINDOWS
-    return V2_WINDOWS
+def add_months(value: date, months: int) -> date:
+    month_index = value.month - 1 + months
+    year = value.year + month_index // 12
+    month = month_index % 12 + 1
+    day = min(value.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
+
+
+def _inclusive_days(start: date, days: int) -> DateWindow:
+    return DateWindow(start, start + timedelta(days=days - 1))
+
+
+def _version_windows(origin: date) -> dict[SplitName, DateWindow]:
+    train = DateWindow(origin, add_months(origin, TRAIN_MONTHS))
+    validation = _inclusive_days(train.end + timedelta(days=1), VALIDATION_DAYS)
+    test = _inclusive_days(validation.end + timedelta(days=1), TEST_DAYS)
+    return {
+        "train": train,
+        "validation": validation,
+        "test": test,
+        "holdout": test,
+    }
+
+
+def build_split_plan(origin: date) -> SplitPlan:
+    """v1 starts at origin; v2 starts one week later. Same 2m / 1w / 1w ratios.
+
+    Champion/challenger comparison uses v2's test week (also exposed as holdout).
+    """
+    v1 = _version_windows(origin)
+    v2 = _version_windows(origin + timedelta(days=V2_SHIFT_DAYS))
+    v1 = {**v1, "holdout": v2["test"]}
+    return SplitPlan(origin=origin, v1=v1, v2=v2)
+
+
+def windows_for(version: ModelVersion, origin: date) -> dict[SplitName, DateWindow]:
+    return build_split_plan(origin).windows_for(version)
 
 
 def mask_window(created: pd.Series, window: DateWindow) -> pd.Series:
@@ -70,9 +100,9 @@ def select_window(frame: pd.DataFrame, window: DateWindow, created_col: str = "c
     return frame.loc[mask_window(frame[created_col], window)].copy()
 
 
-def split_summary_rows() -> list[dict[str, str]]:
+def split_summary_rows(plan: SplitPlan) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
-    for version, mapping in (("v1", V1_WINDOWS), ("v2", V2_WINDOWS)):
+    for version, mapping in (("v1", plan.v1), ("v2", plan.v2)):
         for name, window in mapping.items():
             rows.append(
                 {

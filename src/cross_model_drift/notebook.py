@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -12,6 +13,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
 from cross_model_drift.config import AppConfig, load_config
+from cross_model_drift.splits import SplitPlan, build_split_plan
 
 
 def create_db_engine(config: AppConfig) -> Engine:
@@ -47,6 +49,10 @@ class EdaSession:
     engine: Engine
     read_sql: Callable[[str], pd.DataFrame]
     show: Callable[..., None]
+    min_date: Callable[[str], date]
+
+    def split_plan(self) -> "SplitPlan":
+        return build_split_plan(self.min_date("created"))
 
 
 def setup_eda(name: str = "local") -> EdaSession:
@@ -57,12 +63,17 @@ def setup_eda(name: str = "local") -> EdaSession:
     def query(sql: str) -> pd.DataFrame:
         return pd.read_sql(text(sql), engine)
 
+    def min_date(col: str) -> date:
+        value = pd.read_sql(text(f"SELECT MIN(`{col}`) AS d FROM `{config.transactions_table}`"), engine)
+        return pd.Timestamp(value.loc[0, "d"]).date()
+
     return EdaSession(
         config=config,
         table=config.transactions_table,
         engine=engine,
         read_sql=query,
         show=show,
+        min_date=min_date,
     )
 
 

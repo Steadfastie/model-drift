@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -11,7 +11,7 @@ from sqlalchemy.engine import Engine
 from cross_model_drift.config import AppConfig, load_config
 from cross_model_drift.features import engineer_features
 from cross_model_drift.notebook import create_db_engine
-from cross_model_drift.splits import DateWindow, ModelVersion, SplitName, windows_for
+from cross_model_drift.splits import DateWindow, ModelVersion, SplitName, build_split_plan
 
 TRANSACTION_COLUMNS = (
     "id",
@@ -61,6 +61,20 @@ def load_transactions(
     return frame
 
 
+def db_min_date(
+    config: AppConfig | None = None,
+    *,
+    engine: Engine | None = None,
+    date_col: str = "created",
+) -> date:
+    """Earliest timestamp in the transactions table, used as the split origin."""
+    cfg = config or load_config()
+    db = engine or create_db_engine(cfg)
+    sql = f"SELECT MIN(`{date_col}`) AS d FROM `{cfg.transactions_table}`"
+    value = pd.read_sql(text(sql), db).loc[0, "d"]
+    return pd.Timestamp(value).date()
+
+
 def load_split(
     version: ModelVersion,
     split: SplitName,
@@ -68,8 +82,12 @@ def load_split(
     *,
     engine: Engine | None = None,
     engineer: bool = True,
+    origin: date | None = None,
 ) -> pd.DataFrame:
-    window = windows_for(version)[split]
+    if origin is None:
+        origin = db_min_date(config, engine=engine)
+    plan = build_split_plan(origin)
+    window = plan.windows_for(version)[split]
     frame = load_transactions(config, engine=engine, windows=[window])
     if engineer:
         return engineer_features(frame)
