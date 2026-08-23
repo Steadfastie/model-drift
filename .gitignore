@@ -1,0 +1,12 @@
+.vscode/
+.idea/
+
+__pycache__/
+*.pyc
+*venv/
+
+.ipynb_checkpoints/
+
+.env
+.DS_Store
+transactions.csv

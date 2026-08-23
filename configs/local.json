@@ -1,0 +1,9 @@
+{
+  "mysql_host": "localhost",
+  "mysql_port": 3306,
+  "mysql_user": "drift_user",
+  "mysql_password": "password",
+  "mysql_database": "cross_model_drift",
+  "transactions_table": "transactions",
+  "transactions_csv": "transactions.csv"
+}

@@ -1,0 +1,23 @@
+[project]
+name = "cross-model-drift"
+version = "0.1.0"
+description = "Sandbox for testing model drift across champion/challenger models"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas>=2.2.0",
+    "pymysql>=1.1.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cross_model_drift"]
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
+    "pytest>=9.1.1",
+]
