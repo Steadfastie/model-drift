@@ -2,7 +2,6 @@ notebooks/02_data_distribution.ipynb filter=nbstripout
 notebooks/03_chronological_splits.ipynb filter=nbstripout
 notebooks/04_transaction_features.ipynb filter=nbstripout
 notebooks/05_behavioural_features.ipynb filter=nbstripout
-notebooks/06_train_logistic_baseline.ipynb filter=nbstripout
 notebooks/07_train_lightgbm_baseline.ipynb filter=nbstripout
 notebooks/08_optuna_hpo.ipynb filter=nbstripout
 notebooks/09_train_v1_v2.ipynb filter=nbstripout
