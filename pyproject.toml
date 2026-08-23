@@ -39,6 +39,7 @@ testpaths = ["tests"]
 
 [dependency-groups]
 dev = [
+    "clearml-agent>=0.17.0",
     "jupyter>=1.1.1",
     "nbstripout>=0.8.1",
     "pytest>=9.1.1",
