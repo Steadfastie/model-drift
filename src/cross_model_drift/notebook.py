@@ -93,6 +93,7 @@ def setup_model_session(name: str = "local") -> ModelSession:
         engine=eda.engine,
         read_sql=eda.read_sql,
         show=eda.show,
+        min_date=eda.min_date,
         artifacts=artifacts,
         threshold=eda.config.classification_threshold,
     )
