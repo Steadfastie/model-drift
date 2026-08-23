@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from matplotlib.figure import Figure
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
 
@@ -27,7 +29,7 @@ def configure_plotting() -> None:
     )
 
 
-def show(fig: plt.Figure | None = None) -> None:
+def show(fig: Figure | None = None) -> None:
     fig = fig or plt.gcf()
     fig.tight_layout()
     plt.show()
@@ -62,3 +64,31 @@ def setup_eda(name: str = "local") -> EdaSession:
         read_sql=query,
         show=show,
     )
+
+
+@dataclass(frozen=True)
+class ModelSession(EdaSession):
+    artifacts: Path
+    threshold: float
+
+
+def setup_model_session(name: str = "local") -> ModelSession:
+    eda = setup_eda(name)
+    artifacts = eda.config.artifacts_path()
+    artifacts.mkdir(parents=True, exist_ok=True)
+    return ModelSession(
+        config=eda.config,
+        table=eda.table,
+        engine=eda.engine,
+        read_sql=eda.read_sql,
+        show=eda.show,
+        artifacts=artifacts,
+        threshold=eda.config.classification_threshold,
+    )
+
+
+def artifact_path(*parts: str, config: AppConfig | None = None) -> Path:
+    root = (config or load_config()).artifacts_path()
+    path = root.joinpath(*parts)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path

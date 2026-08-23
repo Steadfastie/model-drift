@@ -1,25 +1,4 @@
-services:
-  mysql:
-    image: mysql:8.4
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: cross_model_drift
-      MYSQL_USER: drift_user
-      MYSQL_PASSWORD: password
-    command:
-      - --local-infile=1
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ppassword"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 15s
-
-volumes:
-  mysql_data:
+# Compatibility wrapper. Prefer:
+#   docker compose -f build/compose.yml -p cross-model-drift up -d
+include:
+  - path: compose.yml

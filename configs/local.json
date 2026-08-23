@@ -5,5 +5,11 @@
   "mysql_password": "password",
   "mysql_database": "cross_model_drift",
   "transactions_table": "transactions",
-  "transactions_csv": "transactions.csv"
+  "transactions_csv": "transactions.csv",
+  "artifacts_dir": "artifacts",
+  "classification_threshold": 0.5,
+  "clearml_project": "cross-model-drift",
+  "clearml_web_host": "http://localhost:8080",
+  "clearml_api_host": "http://localhost:8008",
+  "clearml_files_host": "http://localhost:8081"
 }

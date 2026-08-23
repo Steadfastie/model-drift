@@ -5,9 +5,16 @@ description = "Sandbox for testing model drift across champion/challenger models
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "clearml>=1.18.0",
+    "joblib>=1.4.0",
+    "lightgbm>=4.5.0",
     "matplotlib>=3.9.0",
+    "numpy>=2.0.0",
+    "optuna>=4.0.0",
     "pandas>=2.2.0",
+    "pyarrow>=17.0.0",
     "pymysql>=1.1.1",
+    "scikit-learn>=1.5.0",
     "seaborn>=0.13.2",
     "sqlalchemy>=2.0.0",
 ]
@@ -18,6 +25,17 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cross_model_drift"]
+
+[tool.pyright]
+include = ["src", "tests"]
+extraPaths = ["src"]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [dependency-groups]
 dev = [

@@ -1,0 +1,136 @@
+# Single Compose project: cross-model-drift
+#   docker compose -f build/compose.yml -p cross-model-drift up -d
+#
+# MySQL:   localhost:3306
+# ClearML: UI :8080  API :8008  files :8081
+#
+# MCP is not a container. VS Code runs `uvx clearml-mcp` locally against
+# ~/.clearml/clearml.conf.
+
+name: cross-model-drift
+
+services:
+  mysql:
+    image: mysql:8.4
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: cross_model_drift
+      MYSQL_USER: drift_user
+      MYSQL_PASSWORD: password
+    command:
+      - --local-infile=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+
+  redis:
+    image: redis:7.4.2
+    restart: unless-stopped
+    volumes:
+      - clearml_redis:/data
+
+  mongo:
+    image: mongo:7.0.16
+    restart: unless-stopped
+    command: --setParameter internalQueryMaxBlockingSortMemoryUsageBytes=196100200
+    volumes:
+      - clearml_mongo_db:/data/db
+      - clearml_mongo_configdb:/data/configdb
+
+  elasticsearch:
+    image: elasticsearch:8.17.4
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      cluster.name: clearml
+      node.name: clearml
+      bootstrap.memory_lock: "false"
+      cluster.routing.allocation.disk.watermark.low: 500mb
+      cluster.routing.allocation.disk.watermark.high: 500mb
+      cluster.routing.allocation.disk.watermark.flood_stage: 500mb
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - clearml_elastic:/usr/share/elasticsearch/data
+
+  fileserver:
+    image: clearml/server:latest
+    platform: linux/amd64
+    command: [fileserver]
+    restart: unless-stopped
+    environment:
+      CLEARML__fileserver__delete__allow_batch: "true"
+    ports:
+      - "8081:8081"
+    volumes:
+      - clearml_logs:/var/log/clearml
+      - clearml_config:/opt/clearml/config
+      - clearml_files:/mnt/fileserver
+
+  apiserver:
+    image: clearml/server:latest
+    platform: linux/amd64
+    command: [apiserver]
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+      - mongo
+      - redis
+      - fileserver
+    environment:
+      CLEARML_ELASTIC_SERVICE_HOST: elasticsearch
+      CLEARML_ELASTIC_SERVICE_PORT: 9200
+      CLEARML_MONGODB_SERVICE_HOST: mongo
+      CLEARML_MONGODB_SERVICE_PORT: 27017
+      CLEARML_REDIS_SERVICE_HOST: redis
+      CLEARML_REDIS_SERVICE_PORT: 6379
+      CLEARML_SERVER_DEPLOYMENT_TYPE: linux
+      CLEARML__apiserver__pre_populate__enabled: "true"
+      CLEARML__apiserver__pre_populate__zip_files: /opt/clearml/db-pre-populate
+      CLEARML__apiserver__pre_populate__artifacts_path: /mnt/fileserver
+      CLEARML__services__async_urls_delete__enabled: "true"
+    ports:
+      - "8008:8008"
+    volumes:
+      - clearml_logs:/var/log/clearml
+      - clearml_config:/opt/clearml/config
+      - clearml_files:/mnt/fileserver
+
+  webserver:
+    image: clearml/server:latest
+    platform: linux/amd64
+    command: [webserver]
+    restart: unless-stopped
+    depends_on:
+      - apiserver
+    ports:
+      - "8080:80"
+
+volumes:
+  mysql_data:
+    external: true
+    name: cross-model-drift_mysql_data
+  clearml_logs:
+  clearml_config:
+  clearml_files:
+  clearml_elastic:
+  clearml_mongo_db:
+  clearml_mongo_configdb:
+  clearml_redis:
