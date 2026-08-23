@@ -3,6 +3,3 @@ notebooks/02_data_distribution.ipynb filter=nbstripout
 notebooks/03_chronological_splits.ipynb filter=nbstripout
 notebooks/04_transaction_features.ipynb filter=nbstripout
 notebooks/05_behavioural_features.ipynb filter=nbstripout
-notebooks/10_holdout_comparison.ipynb filter=nbstripout
-notebooks/11_agreement_and_disagreements.ipynb filter=nbstripout
-notebooks/12_psi_drift.ipynb filter=nbstripout
