@@ -5,8 +5,11 @@ description = "Sandbox for testing model drift across champion/challenger models
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "matplotlib>=3.9.0",
     "pandas>=2.2.0",
     "pymysql>=1.1.1",
+    "seaborn>=0.13.2",
+    "sqlalchemy>=2.0.0",
 ]
 
 [build-system]
@@ -19,5 +22,6 @@ packages = ["src/cross_model_drift"]
 [dependency-groups]
 dev = [
     "jupyter>=1.1.1",
+    "nbstripout>=0.8.1",
     "pytest>=9.1.1",
 ]
