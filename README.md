@@ -103,19 +103,19 @@ v2:       [========== train ==========][valid][test]
 
 | Metric name | Question it answers | Rough interpretation |
 | --- | --- | --- |
-| **Precision** | When the model says “fraud”, how often is it right? | 0% = always wrong, 100% = every flagged case is fraud |
-| **Recall** | Of all real fraud, how much did we catch? | 0% = caught none, 100% = caught all |
+| **Precision** | When model marks, how often is the model right? | 0% = always wrong, 100% = every flagged case is fraud |
+| **Recall** | Of all real signals, how much did the model catch? | 0% = caught none, 100% = caught all |
 | **F1** | Can we balance precision and recall? | Higher is better; 1.0 is perfect |
-| **ROC-AUC** | Can the model rank signal above legitimate traffic across thresholds? | 0.50 ≈ random, ~0.70 useful, ~0.90+ strong |
-| **PR-AUC** | How good is that ranking when signal is relatively rare? | Higher is better; especially useful for imbalanced data |
+| **ROC-AUC** | Is the model guessing at random or not? | 0.50 ≈ random, ~0.70 useful, ~0.90+ strong |
+| **PR-AUC** | How good is the model when signal is relatively rare? | Higher is better; especially useful for imbalanced data |
 
 ### Model behaviour
 
 | Metric name | Question it answers | Rough interpretation |
 | --- | --- | --- |
 | **Agreement** | Do v1 and v2 make the same decision? | 100% = identical decisions; lower means more prediction changes |
-| **Score JSD** | Did the score distributions move? | 0 = identical; 0.05 = very similar; 0.20 noticeably different; larger values (0.5+) mean increasingly different distributions |
-| **Max PSI** | Did an input distribution move away from its reference population? | < 0.10 is usually considered stable; 0.10–0.25 deserves attention; > 0.25 is significant drift |
+| **Score JSD** | Did the output score distributions move? | 0 = identical; 0.05 = very similar; 0.20 noticeably different; larger values (0.5+) mean increasingly different distributions |
+| **Max PSI** | Did an input move away from its reference? | < 0.10 is usually considered stable; 0.10–0.25 deserves attention; > 0.25 is significant drift |
 
 ## Final comparison: what actually happened?
 
