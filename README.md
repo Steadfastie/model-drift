@@ -91,10 +91,10 @@ The two baseline models are deliberately independent. Logistic Regression gives 
 
 ## Data split
 
-```text
-v1:  [========== train ==========][valid][test]
-v2:       [========== train ==========][valid][test]
-         └──── 7-day freshness shift ────┘
+```
+v1:  [========== train ==========][hpo][test]
+v2:       [========== train ==========][hpo][test]
+Final Comparison:                           [====]
 ```
 
 ## What do the metrics mean?
